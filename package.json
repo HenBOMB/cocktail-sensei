@@ -1,0 +1,24 @@
+{
+  "name": "cocktail-sensei",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HenBOMB/cocktail-sensei.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HenBOMB/cocktail-sensei/issues"
+  },
+  "homepage": "https://github.com/HenBOMB/cocktail-sensei#readme",
+  "dependencies": {
+    "discord.js": "^14.6.0",
+    "yaml": "^2.1.3"
+  }
+}

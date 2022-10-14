@@ -1,0 +1,8 @@
+ingredients:
+  - name: gin
+    amount: 80
+  - name: water
+    type: soda
+    amount: 0.5
+  - name: lemon
+    amount: .3

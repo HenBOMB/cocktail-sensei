@@ -1,0 +1,12 @@
+ingredients:
+  - name: rum
+    type: silver
+    amount: 45
+  - name: simple_syrup
+    amount: 22.5
+  - name: water
+    type: soda
+  - name: lime
+    amount: 0.5
+  - name: mint
+    amount: 6
