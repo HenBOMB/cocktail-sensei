@@ -21,9 +21,7 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 // ? // // // // // // // // // // // // // // // // // // // // //
 
-client.login(token).then(() => {
-    console.clear();
-});
+client.login(token).then(console.clear);
 
 client.once('ready', async () => {
 
@@ -153,7 +151,7 @@ client.once('ready', async () => {
 
 // ? // // // // // // // // // // // // // // // // // // // // //
 
-client.on('messageCreate', async message => {
+client.on('messageCreate', async (message) => {
     if(message.author.bot) return;
 	
 	client.features.each(feature => {
@@ -166,82 +164,64 @@ client.on('messageCreate', async message => {
 	});
 });
 
-client.on('interactionCreate', async (interaction) => {
-
-	if (interaction.isChatInputCommand())
-		return handleSlashCommands(interaction);
-
-	if (interaction.isAutocomplete())
-		return handleAutocomplete(interaction);
-});
-
-// ? // // // // // // // // // // // // // // // // // // // // //
-
 const sorryErrOcc = { content: '☹️ Sorry, an error occured. Please try again later.', ephemeral: true };
 
 const sorryUnavailable = { content: `☹️ Sorry, this command is currently unavailable. Please try again later.`, ephemeral: true };
 
-async function handleSlashCommands(interaction)
-{
+client.on('interactionCreate', async (interaction) => {
+
 	const command = client.commands.get(interaction.commandName);
-
-	if(!command)
+	
+	if (interaction.isChatInputCommand())
 	{
-		// ! Impossible to get here unless
-		// ? The api changes
-		// ? There is an unregistered command
-		// ? If 2 interactions from separate places call the same interaction?
-		return interaction.reply({ content: `☹️ Sorry, that command does not exist.`, ephemeral: true });
-	}
-
-	if(!command.available)
-	{
-		return interaction.reply(sorryUnavailable);
-	}
-
-	// ? Run the command interaction
-
-	await interaction.deferReply({ ephemeral: command.ephemeral || false });
-
-	try {
-		const out = (await command.interact(interaction));
-
-		if(!out) 
+		if(!command)
 		{
-			await interaction.editReply(sorryUnavailable);
-			return;
+			// ! Impossible to get here unless
+			// ? The api changes
+			// ? There is an unregistered command
+			// ? If 2 interactions from separate places call the same interaction?
+			return interaction.reply({ content: `☹️ Sorry, that command does not exist.`, ephemeral: true });
 		}
 
-		const options = out.content || out.embeds? out : { 
-			content: out instanceof EmbedBuilder? '' : out, 
-			embeds: out instanceof EmbedBuilder? [out] : []
-		};
+		if(!command.available)
+		{
+			return interaction.reply(sorryUnavailable);
+		}
 
-		options.ephemeral = command.ephemeral || out.ephemeral || false;
+		await interaction.deferReply({ ephemeral: command.ephemeral || false });
 
-		await interaction.editReply(options);
-	} 
-	catch (error) {
-		console.log(error);
-		await interaction.editReply(sorryErrOcc);
-	} 
-}
+		try {
+			const out = (await command.interact(interaction));
 
-async function handleAutocomplete(interaction)
-{
-	switch (interaction.commandName) 
-	{
-        case 'recipe':
-			return interaction.respond(
-				readdirSync('./data/cocktails/')
-				.filter(choice => choice.toLowerCase().includes(interaction.options.getFocused().toLowerCase()))
-				.map(choice => {
-					let name = choice.replace(/_/g, ' ');
-					return {
-						name: name[0].toUpperCase() + name.slice(1,-4),
-						value: choice,
-					}
-				})
-			);
+			if(!out) 
+			{
+				await interaction.editReply(sorryUnavailable);
+				return;
+			}
+
+			const options = out.content || out.embeds? out : { 
+				content: out instanceof EmbedBuilder? '' : out, 
+				embeds: out instanceof EmbedBuilder? [out] : []
+			};
+
+			options.ephemeral = command.ephemeral || out.ephemeral || false;
+
+			return await interaction.editReply(options);
+		} 
+		catch (error) {
+			return await interaction.editReply(sorryErrOcc);
+		} 
 	}
-}
+
+	if (interaction.isAutocomplete())
+	{
+		try {
+			const data = command.autocomplete(interaction);
+			if(!data) return await interaction.respond([{ name: 'none', value: null }]);
+			return await interaction.respond(data);
+		} 
+		catch { 
+			return await interaction.respond([{ name: 'none', value: null }]);
+		}
+	}
+});

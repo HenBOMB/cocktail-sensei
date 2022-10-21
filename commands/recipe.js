@@ -1,6 +1,10 @@
 const { readdirSync, readFileSync } = require('fs');
 const { parse } = require('yaml');
-const { SlashCommandBuilder, SlashCommandStringOption, EmbedBuilder } = require("discord.js");
+const { 
+    SlashCommandBuilder, 
+    SlashCommandStringOption, 
+    EmbedBuilder 
+} = require("discord.js");
 
 module.exports = {
 
@@ -25,38 +29,69 @@ module.exports = {
             contents: this.getIngredient(v.name, v.type)
         }));
         
-        console.log(ingredients);
+        let total = 0;
+        let fileds = ingredients.map(i => {
+            let cost = (i.contents.cost / (i.contents.amount ?? 750)) * (i.cocktail.amount || 1);
+            total += cost;
+            return {
+                name: `${i.contents.type || ''}${i.contents.name}`, 
+                value: `$ ${Math.ceil(cost)}`,
+                inline: true
+            }
+        });
+
+        fileds.push({
+            name: `Total`, 
+            value: `$ ${this.round(total)}`
+        });
 
         let embed = new EmbedBuilder()
             .setAuthor({ name })
-            .addFields(
-                ingredients.map(i => (
-                    {
-                        name: `${i.contents.type || ''}${i.contents.name}`, 
-                        value: `$ ${(i.cocktail.amount ?? 750) / i.contents.cost}`,
-                        indent: true
-                    }
-                ))
-            )
+            .addFields(fileds)
 
         return embed;
     },
 
     getIngredient(name, type)
     {
-        const dirs = readdirSync('./data/ingredients');
+        let found = { cost: 0 };
 
-        for(const dir of dirs)
+        for(const dir of readdirSync('./data/ingredients'))
         {
-            for(const _dir of readdirSync(`./data/ingredients/${dir}/`))
+            for(const subdir of readdirSync(`./data/ingredients/${dir}/`))
             {
-                const json = parse(readFileSync(`./data/ingredients/${dir}/${_dir}`, 'utf8'));
+                const json = parse(readFileSync(`./data/ingredients/${dir}/${subdir}`, 'utf8'));
                 
                 if(json.name !== name) continue;
-                if(type && json.type !== type) continue;
 
-                return json;
+                if(type && json.type && json.type !== type) continue;
+
+                if(found.cost > json.cost) continue;
+
+                found = json;
             }
         }
+
+        if(!found)
+        {
+            throw Error(`Missing ingredient: ${name} / ${type || 'none'}`);
+        }
+        
+        return found;
+    },
+
+    round : (num) => 50 * Math.ceil(num / 50),
+
+    autocomplete(interaction)
+    {
+        return readdirSync('./data/cocktails/')
+            .filter(choice => choice.toLowerCase().includes(interaction.options.getFocused().toLowerCase()))
+            .map(choice => {
+                let name = choice.replace(/_/g, ' ');
+                return {
+                    name: name[0].toUpperCase() + name.slice(1,-4),
+                    value: choice,
+                }
+            });
     }
 }

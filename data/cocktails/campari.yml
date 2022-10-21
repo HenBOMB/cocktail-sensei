@@ -1,6 +1,5 @@
 ingredients:
   - name: campari
     amount: 120
-  - name: juice
-    type: orange
+  - name: orange_juice
     amount: 0.5
